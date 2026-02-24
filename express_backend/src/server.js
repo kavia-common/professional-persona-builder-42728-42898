@@ -39,6 +39,8 @@ app.set('trust proxy', String(process.env.TRUST_PROXY).toLowerCase() === 'true')
 
 app.use(helmet());
 app.use(cors(buildCorsOptions()));
+// Explicitly handle preflight across-the-board (harmless when called via Next proxy).
+app.options('*', cors(buildCorsOptions()));
 app.use(express.json({ limit: '10mb' }));
 app.use(morgan('dev'));
 app.use(requestTimeout());

@@ -13,7 +13,18 @@
 const path = require('path');
 
 // Always load env vars from express_backend/.env, regardless of process CWD.
-require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
+// Keep startup resilient: if dotenv isn't installed for some reason, log a warning
+// and continue (env vars may still be provided by the runtime/container).
+try {
+  // eslint-disable-next-line import/no-extraneous-dependencies, global-require
+  require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
+} catch (err) {
+  // eslint-disable-next-line no-console
+  console.warn(
+    'Warning: dotenv not available; proceeding without loading .env from disk.',
+    err && err.message ? `(${err.message})` : ''
+  );
+}
 
 const express = require('express');
 const cors = require('cors');

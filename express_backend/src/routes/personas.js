@@ -61,6 +61,15 @@ router.get('/:id', async (req, res) => {
 router.put('/:id', async (req, res) => {
   const parsed = PersonaUpdateRequest.safeParse(req.body);
   if (!parsed.success) {
+    // eslint-disable-next-line no-console
+    console.warn('[personas][PUT] validation_error', {
+      personaId: req.params.id,
+      issues: parsed.error.issues?.map((i) => ({
+        path: i.path,
+        code: i.code,
+        message: i.message
+      }))
+    });
     return res.status(400).json({ error: 'validation_error', details: parsed.error.flatten() });
   }
 
@@ -71,9 +80,10 @@ router.put('/:id', async (req, res) => {
     // Update metadata (title). Versioned JSON handled separately.
     const updated = await personasRepo.updatePersona(req.params.id, { title: parsed.data.title });
 
-    // If personaJson provided, create a new version.
+    // If personaJson provided (and not null), create a new version.
+    // We explicitly allow personaJson=null in the API as "no JSON update".
     let createdVersion = null;
-    if (parsed.data.personaJson) {
+    if (Object.prototype.hasOwnProperty.call(parsed.data, 'personaJson') && parsed.data.personaJson !== null) {
       createdVersion = await personasRepo.createPersonaVersion(req.params.id, {
         personaJson: parsed.data.personaJson
       });
